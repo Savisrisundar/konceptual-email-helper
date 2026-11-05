@@ -201,7 +201,15 @@ function onItem() {
   write();
 }
 
+// Shows when this copy was uploaded (publish.ps1 stamps ?v=yyyyMMddHHmm on the script links),
+// so it's easy to see whether Outlook has loaded the latest version.
+function showVersion() {
+  const m = /[?&]v=(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})/.exec(document.querySelector('script[src*="taskpane.js"]')?.src || "");
+  $("version").textContent = m ? `Version: ${+m[3]}/${+m[2]}/${m[1]} ${m[4]}:${m[5]}` : "Version: local test copy";
+}
+
 Office.onReady(() => {
+  showVersion();
   loadSettings();
   $("write").addEventListener("click", write);
   $("stop").addEventListener("click", stop);

@@ -38,5 +38,6 @@ button:disabled { opacity: 0.5; cursor: default; }
 #status.error { color: #c4314b; }
 #status.warn { padding: 6px 8px; border-left: 3px solid #e8662b; background: var(--note); color: var(--text); }
 .note { margin-top: 14px; padding: 8px 10px; background: var(--note); border-radius: 4px; font-size: 12px; color: var(--muted); }
+.version { margin: 6px 0 0; font-size: 11px; }
 details { margin-top: 14px; }
 summary { cursor: pointer; font-weight: 600; }
