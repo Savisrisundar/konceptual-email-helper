@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Konceptual Email Helper</title>
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  <link rel="stylesheet" href="taskpane.css">
+</head>
+<body>
+  <main>
+    <p id="about-item" class="muted">Loading…</p>
+
+    <label for="notes">What do you want to say? <span class="muted">(optional)</span></label>
+    <textarea id="notes" rows="3" placeholder="e.g. yes Friday works, ask them to confirm the time"></textarea>
+
+    <div class="row">
+      <button id="write" type="button" class="primary">Write reply</button>
+      <button id="stop" type="button" hidden>Stop</button>
+    </div>
+
+    <p id="status" class="muted" role="status"></p>
+
+    <textarea id="draft" rows="14" placeholder="The draft appears here. You can edit it before using it."></textarea>
+
+    <div class="row" id="read-actions">
+      <button id="reply" type="button" class="primary" disabled>Reply</button>
+      <button id="reply-all" type="button" disabled>Reply all</button>
+      <button id="copy" type="button" disabled>Copy</button>
+    </div>
+    <div class="row" id="compose-actions" hidden>
+      <button id="insert" type="button" class="primary" disabled>Insert into email</button>
+      <button id="copy2" type="button" disabled>Copy</button>
+    </div>
+
+    <p class="note">Written by a free AI on this computer. Nothing is sent automatically: read and edit the draft, then press Send yourself.</p>
+
+    <details id="settings">
+      <summary>Settings</summary>
+      <label for="about">Who is writing?</label>
+      <textarea id="about" rows="3"></textarea>
+      <label class="check"><input id="auto" type="checkbox"> Write a reply automatically when I open an email</label>
+      <label for="localModel">AI model</label>
+      <input id="localModel" type="text" spellcheck="false">
+      <label for="localUrl">AI address</label>
+      <input id="localUrl" type="text" spellcheck="false">
+      <div class="row">
+        <button id="save" type="button">Save settings</button>
+        <span id="saved" class="muted"></span>
+      </div>
+    </details>
+  </main>
+  <script src="ai.js"></script>
+  <script src="taskpane.js"></script>
+</body>
+</html>
