@@ -4,12 +4,15 @@
 
 (function (root) {
   const DEFAULTS = {
-    about: "Nick Warrier, Director of Konceptual Consulting Engineers, a civil and structural engineering consultancy in Broadmeadows, Victoria",
+    about: "", // empty: the mailbox owner's name (from Outlook) plus COMPANY
     localUrl: "http://localhost:11434",
     localModel: "gemma3:4b",
     spelling: "Australian English",
   };
-  const MAX_THREAD_CHARS = 6000;
+  const COMPANY = "Konceptual Consulting Engineers, a civil and structural engineering consultancy in Broadmeadows, Victoria";
+  // The newest email is at the top of the thread; older quoted emails and disclaimers below it
+  // mostly slow the AI down, so only the first part is sent.
+  const MAX_THREAD_CHARS = 3000;
 
   const REPLY_RULES = `Write an email reply from you to the email thread below.
 - Answer what the latest email actually says or asks, in the order it asks it. If they asked several questions, answer each one.
@@ -28,10 +31,16 @@
 - Never invent fees, dates, project details or technical outcomes: use placeholders like [date] or [to be confirmed].
 - Greeting with the recipient's first name if known, a short sign-off and the writer's first name. No subject line, no signature block.`;
 
-  function buildSystem(s) {
+  // me: the mailbox owner's display name from Outlook, e.g. "Savitha Sundaresan".
+  function buildSystem(s, me = "") {
+    const writer = (s.about || "").trim() || `${me || "a team member"} at ${COMPANY}`;
+    const first = (me || "").trim().split(/\s+/)[0];
     return [
-      `You write emails on behalf of ${(s.about || "").trim() || DEFAULTS.about}.`,
+      `You write emails on behalf of ${writer}.`,
       "Write in the first person as them. Sound like a real professional, not a marketing bot.",
+      first
+        ? `Sign off with "${first}" only. Never sign with another person's name or copy a signature from the thread.`
+        : "Never sign with a name or signature copied from the thread.",
       `Use ${s.spelling || DEFAULTS.spelling} spelling.`,
       "Never invent facts: no made-up projects, clients, locations, services, dates, times, prices or numbers. Use only what is given here. If the text needs a detail you don't have, write a short placeholder in square brackets, such as [time] or [project name].",
       "Do not use em dashes or en dashes. Use commas, full stops or brackets instead.",
@@ -83,7 +92,7 @@
     const unseen = [...new Set(facts.map((f) => f.trim()))].filter((f) => !source.includes(f.toLowerCase().replace(/\s+/g, "")));
     if (unseen.length) warnings.push(`not in the email or your notes: ${unseen.join(", ")}`);
     const claims = draft.match(
-      /\b(i|we)(['’]ve| have)\s+(already\s+)?(adjusted|booked|rebooked|rescheduled|scheduled|arranged|confirmed|sent|checked|reviewed|inspected|approved|certified|updated|organised|organized)\b/gi
+      /\b(i|we)(['’]ve| have)\s+(already\s+)?(adjusted|booked|rebooked|rescheduled|scheduled|arranged|confirmed|sent|checked|reviewed|inspected|approved|certified|updated|organised|organized|changed|completed|finished|submitted|signed|logged|paid|attached|done)\b/gi
     ) || [];
     const notes = (ctx.notes || "").toLowerCase();
     const unclaimed = [...new Set(claims)].filter((c) => !notes.includes(c.split(/\s+/).pop().toLowerCase()));
@@ -105,7 +114,7 @@
       keep_alive: "2h",
       options: { temperature: 0.6, num_ctx: 8192 },
       messages: [
-        { role: "system", content: buildSystem(s) },
+        { role: "system", content: buildSystem(s, ctx.me) },
         { role: "user", content: buildUser(ctx) },
       ],
     });

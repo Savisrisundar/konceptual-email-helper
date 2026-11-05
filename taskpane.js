@@ -26,7 +26,7 @@ function loadSettings() {
 
 function saveSettings() {
   const rs = Office.context.roamingSettings;
-  settings.about = $("about").value.trim() || KonceptualAI.DEFAULTS.about;
+  settings.about = $("about").value.trim();
   settings.localModel = $("localModel").value.trim() || KonceptualAI.DEFAULTS.localModel;
   settings.localUrl = $("localUrl").value.trim() || KonceptualAI.DEFAULTS.localUrl;
   settings.auto = $("auto").checked;
