@@ -55,7 +55,10 @@
     if (ctx.notes) {
       parts.push(`The user's notes on what to say (follow them):\n<user_notes>\n${ctx.notes}\n</user_notes>`);
     }
-    if (ctx.me) parts.push(`You are: ${ctx.me}`);
+    if (ctx.me) {
+      const myFirst = ctx.me.trim().split(/\s+/)[0];
+      parts.push(`You are: ${ctx.me}. When the emails mention ${myFirst}, that is you: write "I", "me" and "my", never "${myFirst}'s" or "she/he".`);
+    }
     if (ctx.subject) parts.push(`Subject: ${ctx.subject}`);
     if (ctx.from) parts.push(`Latest email is from: ${ctx.from}`);
     if (ctx.sentTo) parts.push(`Latest email was sent to: ${ctx.sentTo}${ctx.me && !ctx.sentTo.includes(ctx.me) ? ` (you, ${ctx.me}, were copied in)` : ""}`);
@@ -64,11 +67,44 @@
       parts.push(`You are replying to ${senderFirst}, so greet ${senderFirst} ("Hi ${senderFirst},"), even if their email greets someone else.`);
     }
     if (ctx.thread) {
-      let t = String(ctx.thread).replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
-      if (t.length > MAX_THREAD_CHARS) t = t.slice(0, MAX_THREAD_CHARS) + " …";
-      parts.push(`<email_thread>\n${t}\n</email_thread>`);
+      const { latest, earlier } = splitThread(ctx.thread);
+      parts.push(`The email to reply to${senderFirst ? ` (from ${senderFirst})` : ""}:\n<email_thread>\n${latest}\n</email_thread>`);
+      if (earlier) {
+        parts.push(`Earlier emails in the conversation, for background only. Do not reply to these:\n<earlier_emails>\n${earlier}\n</earlier_emails>`);
+      }
     }
     return parts.join("\n\n");
+  }
+
+  // Outlook gives the whole conversation as one block of text: the newest email first, then
+  // signatures, disclaimers and older quoted emails. Split off the newest one so the AI answers
+  // that, and keep only a little of the history.
+  const HISTORY_START = /\n[ \t>]*(From:[^\n]*\n[ \t>]*(Sent|Date):|-{3,}\s*Original Message\s*-{3,}|On [^\n]{5,120} wrote:)/i;
+  const DISCLAIMER = /(intended recipient|confidential|privileged|climate-friendly|not printing this email|received this (message|email) in error|disclose, distribute)/i;
+
+  function splitThread(thread) {
+    const text = String(thread).replace(/\r/g, "").replace(/[ \t]+\n/g, "\n");
+    const m = HISTORY_START.exec(text);
+    const clean = (s) =>
+      s
+        .split(/\n{2,}/)
+        .filter((p) => !DISCLAIMER.test(p))
+        .join("\n\n")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
+    let latest = clean(m ? text.slice(0, m.index) : text);
+    let earlier = m ? clean(text.slice(m.index)) : "";
+    if (latest.length > MAX_THREAD_CHARS) latest = latest.slice(0, MAX_THREAD_CHARS) + " …";
+    if (earlier.length > 1200) earlier = earlier.slice(0, 1200) + " …";
+    return { latest, earlier };
+  }
+
+  // The small model sometimes greets whoever the email was addressed to. Correct the greeting
+  // to the sender of the email being replied to.
+  function fixGreeting(draft, ctx) {
+    const first = (ctx.fromName || "").trim().split(/\s+/)[0];
+    if (!ctx.thread || !first || /@/.test(first)) return draft;
+    return draft.replace(/^(hi|hello|dear|g'day|good (morning|afternoon))\s+[^,\n]{1,40},/i, `Hi ${first},`);
   }
 
   // Small models often ignore the "no dashes" rule, and sometimes wrap the draft in quotes or markdown.
@@ -174,14 +210,14 @@
         }
       }
       if (crashed && !text && attempt === 1) continue;
-      const final = tidy(text);
+      const final = fixGreeting(tidy(text), ctx);
       if (!final) throw new AIError("The local AI returned an empty draft. Please try again.");
       return final;
     }
     throw new AIError("The local AI stopped while writing. Wait a few seconds and try again.");
   }
 
-  const api = { DEFAULTS, buildSystem, buildUser, tidy, checkDraft, writeEmail, AIError };
+  const api = { DEFAULTS, buildSystem, buildUser, splitThread, fixGreeting, tidy, checkDraft, writeEmail, AIError };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.KonceptualAI = api;
 })(typeof self !== "undefined" ? self : this);
