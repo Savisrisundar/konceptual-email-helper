@@ -125,7 +125,8 @@
     t = t.replace(/\s*[–—]\s*/g, ", ");
     t = t.replace(/,\s*([,.!?])/g, "$1");
     // Filler openers the house style doesn't allow ("I hope you're well." on its own, etc.).
-    t = t.replace(/^[ \t]*I hope (this (email|message) finds you|you(['’]re| are)) (well|doing well)[^.!\n]*[.!][ \t]*/gim, "");
+    // Any opening pleasantry that starts with "I hope", e.g. "I hope you're having a productive week."
+    t = t.replace(/^[ \t]*I hope (this|you|your|all|everything)[^.!\n]*[.!][ \t]*/gim, "");
     t = t.replace(/[ \t]+\n/g, "\n");
     t = t.replace(/\n{3,}/g, "\n\n");
     return t.trim();
