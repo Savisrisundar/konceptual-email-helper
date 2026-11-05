@@ -64,7 +64,12 @@
     if (ctx.sentTo) parts.push(`Latest email was sent to: ${ctx.sentTo}${ctx.me && !ctx.sentTo.includes(ctx.me) ? ` (you, ${ctx.me}, were copied in)` : ""}`);
     const senderFirst = (ctx.fromName || "").trim().split(/\s+/)[0];
     if (ctx.thread && senderFirst) {
-      parts.push(`You are replying to ${senderFirst}, so greet ${senderFirst} ("Hi ${senderFirst},"), even if their email greets someone else.`);
+      const myFirst = (ctx.me || "").trim().split(/\s+/)[0] || "you";
+      parts.push(
+        `ROLES: ${senderFirst} wrote this email and ${myFirst} (you) received it. Write ${myFirst}'s reply back to ${senderFirst}. ` +
+          `Anything ${senderFirst} says they did or set up, ${senderFirst} did, not you: thank them for it or respond to it, never claim it as your own work. ` +
+          `Greet ${senderFirst} ("Hi ${senderFirst},"), even if their email greets someone else.`
+      );
     }
     if (ctx.thread) {
       const { latest, earlier } = splitThread(ctx.thread);
