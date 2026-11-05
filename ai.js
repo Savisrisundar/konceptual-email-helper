@@ -107,8 +107,10 @@
   // The small model sometimes greets whoever the email was addressed to. Correct the greeting
   // to the sender of the email being replied to.
   function fixGreeting(draft, ctx) {
-    const first = (ctx.fromName || "").trim().split(/\s+/)[0];
+    let first = (ctx.fromName || "").trim().split(/\s+/)[0];
     if (!ctx.thread || !first || /@/.test(first)) return draft;
+    // "SAVITHA" or "savitha" -> "Savitha"
+    if (first === first.toUpperCase() || first === first.toLowerCase()) first = first[0].toUpperCase() + first.slice(1).toLowerCase();
     return draft.replace(/^(hi|hello|dear|g'day|good (morning|afternoon))\s+[^,\n]{1,40},/i, `Hi ${first},`);
   }
 
@@ -122,6 +124,8 @@
     t = t.replace(/(\d)\s*[–—]\s*(\d)/g, "$1 to $2");
     t = t.replace(/\s*[–—]\s*/g, ", ");
     t = t.replace(/,\s*([,.!?])/g, "$1");
+    // Filler openers the house style doesn't allow ("I hope you're well." on its own, etc.).
+    t = t.replace(/^[ \t]*I hope (this (email|message) finds you|you(['’]re| are)) (well|doing well)[^.!\n]*[.!][ \t]*/gim, "");
     t = t.replace(/[ \t]+\n/g, "\n");
     t = t.replace(/\n{3,}/g, "\n\n");
     return t.trim();

@@ -145,12 +145,35 @@ function toHtml(text) {
     .join("");
 }
 
+// Opens Outlook's own reply window with the draft in it. It never sends: the user presses Send.
+// The newer *Async version reports whether it worked; older Outlook only has the plain one.
 function reply(all) {
-  const html = toHtml($("draft").value.trim());
+  const text = $("draft").value.trim();
+  const html = toHtml(text);
   const item = Office.context.mailbox.item;
-  if (all) item.displayReplyAllForm(html);
-  else item.displayReplyForm(html);
-  setStatus("Reply opened with the draft. Read it, then press Send yourself.");
+  const opened = () =>
+    setStatus("Reply opened in Outlook with the draft (it may be below the email: scroll down). Read it, then press Send there yourself.");
+  const failed = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      $("draft").select();
+      document.execCommand("copy");
+    }
+    setStatus(`Outlook didn't open the reply, so the draft is copied. Click Outlook's own ${all ? "Reply all" : "Reply"} button, then press Ctrl+V in the reply.`, true);
+  };
+  try {
+    const asyncFn = all ? item.displayReplyAllFormAsync : item.displayReplyFormAsync;
+    if (typeof asyncFn === "function") {
+      asyncFn.call(item, html, (r) => (r.status === Office.AsyncResultStatus.Succeeded ? opened() : failed()));
+    } else {
+      if (all) item.displayReplyAllForm(html);
+      else item.displayReplyForm(html);
+      opened();
+    }
+  } catch {
+    failed();
+  }
 }
 
 function insert() {
