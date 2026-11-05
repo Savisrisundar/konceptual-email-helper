@@ -58,6 +58,11 @@
     if (ctx.me) parts.push(`You are: ${ctx.me}`);
     if (ctx.subject) parts.push(`Subject: ${ctx.subject}`);
     if (ctx.from) parts.push(`Latest email is from: ${ctx.from}`);
+    if (ctx.sentTo) parts.push(`Latest email was sent to: ${ctx.sentTo}${ctx.me && !ctx.sentTo.includes(ctx.me) ? ` (you, ${ctx.me}, were copied in)` : ""}`);
+    const senderFirst = (ctx.fromName || "").trim().split(/\s+/)[0];
+    if (ctx.thread && senderFirst) {
+      parts.push(`You are replying to ${senderFirst}, so greet ${senderFirst} ("Hi ${senderFirst},"), even if their email greets someone else.`);
+    }
     if (ctx.thread) {
       let t = String(ctx.thread).replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
       if (t.length > MAX_THREAD_CHARS) t = t.slice(0, MAX_THREAD_CHARS) + " …";

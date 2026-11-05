@@ -49,7 +49,8 @@ async function readContext() {
 
   if (!isCompose) {
     const from = item.from ? `${item.from.displayName || ""} <${item.from.emailAddress || ""}>`.trim() : "";
-    return { me, subject: item.subject || "", from, fromAddress: item.from?.emailAddress || "", thread: body };
+    const sentTo = (item.to || []).map((r) => r.displayName || r.emailAddress).filter(Boolean).join(", ");
+    return { me, subject: item.subject || "", from, fromName: item.from?.displayName || "", sentTo, thread: body };
   }
 
   // Writing an email: a reply or forward has the earlier emails quoted in the body.
